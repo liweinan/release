@@ -3,7 +3,7 @@ ref:
   from: upi-installer
   timeout: 1h
   grace_period: 10m
-  commands: cucushift-upgrade-mirror-images-by-oc-adm-commands.sh
+  commands: cucushift-upgrade-mirror-images-by-oc-adm-commands-local.sh
   resources:
     limits:
       cpu: "1"

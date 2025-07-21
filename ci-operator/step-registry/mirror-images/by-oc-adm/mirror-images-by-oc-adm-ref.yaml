@@ -3,7 +3,7 @@ ref:
   from: upi-installer
   timeout: 3h0m0s
   grace_period: 10m
-  commands: mirror-images-by-oc-adm-commands.sh
+  commands: mirror-images-by-oc-adm-commands-local.sh
   resources:
     requests:
       cpu: 10m
