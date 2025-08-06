@@ -74,13 +74,28 @@ if [[ "${ACTUAL_REGION}" != "${REGION}" ]]; then
 fi
 
 # 验证zones是否被正确设置
-ACTUAL_CONTROL_PLANE_ZONES=$(yq-go r "${CONFIG}" 'controlPlane.platform.aws.zones' | tr '\n' ',' | sed 's/,$//')
-echo "Actual control plane zones: ${ACTUAL_CONTROL_PLANE_ZONES}"
+CONTROL_PLANE_HAS_A=$(yq-go r "${CONFIG}" 'controlPlane.platform.aws.zones' | grep -q "${REGION}a" && echo "yes" || echo "no")
+CONTROL_PLANE_HAS_B=$(yq-go r "${CONFIG}" 'controlPlane.platform.aws.zones' | grep -q "${REGION}b" && echo "yes" || echo "no")
+COMPUTE_HAS_A=$(yq-go r "${CONFIG}" 'compute[0].platform.aws.zones' | grep -q "${REGION}a" && echo "yes" || echo "no")
+COMPUTE_HAS_B=$(yq-go r "${CONFIG}" 'compute[0].platform.aws.zones' | grep -q "${REGION}b" && echo "yes" || echo "no")
 
-EXPECTED_ZONES="${REGION}a,${REGION}b"
-if [[ "${ACTUAL_CONTROL_PLANE_ZONES}" != "${EXPECTED_ZONES}" ]]; then
-  echo "ERROR: Zones mismatch! Expected: ${EXPECTED_ZONES}, Actual: ${ACTUAL_CONTROL_PLANE_ZONES}"
+echo "Control Plane zones validation:"
+echo "  Contains ${REGION}a: ${CONTROL_PLANE_HAS_A}"
+echo "  Contains ${REGION}b: ${CONTROL_PLANE_HAS_B}"
+echo "Compute zones validation:"
+echo "  Contains ${REGION}a: ${COMPUTE_HAS_A}"
+echo "  Contains ${REGION}b: ${COMPUTE_HAS_B}"
+
+if [[ "${CONTROL_PLANE_HAS_A}" != "yes" || "${CONTROL_PLANE_HAS_B}" != "yes" ]]; then
+  echo "ERROR: Control Plane zones mismatch! Expected to contain ${REGION}a and ${REGION}b"
   exit 1
 fi
+
+if [[ "${COMPUTE_HAS_A}" != "yes" || "${COMPUTE_HAS_B}" != "yes" ]]; then
+  echo "ERROR: Compute zones mismatch! Expected to contain ${REGION}a and ${REGION}b"
+  exit 1
+fi
+
+echo "✅ Region and zones configuration validated successfully"
 
 rm "${PATCH}" 
