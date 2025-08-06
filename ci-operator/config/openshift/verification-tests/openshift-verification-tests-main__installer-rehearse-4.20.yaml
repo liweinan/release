@@ -48,12 +48,10 @@ tests:
     cluster_profile: aws-qe
     env:
       BASE_DOMAIN: qe.devcluster.openshift.com
-      CUSTOM_REGION_LIST: ap-east-2
+      CUSTOM_AWS_REGION: ap-east-2
       CONTROL_PLANE_INSTANCE_TYPE: "m6i.large"
       COMPUTE_NODE_TYPE: "m6i.large"
-    #      # 启用可用区配置，排除ap-east-2a和ap-east-2c
-    #      ENABLE_ZONES: "yes"
-    workflow: cucushift-installer-rehearse-aws-cases-all-regions
+    workflow: cucushift-installer-rehearse-aws-ipi-sno
 - as: installer-rehearse-azure
   cron: '@yearly'
   steps:

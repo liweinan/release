@@ -1,0 +1,21 @@
+ref:
+  as: ipi-conf-aws-custom-region
+  from_image:
+    namespace: ocp
+    name: "4.14"
+    tag: upi-installer
+  grace_period: 10m
+  commands: ipi-conf-aws-custom-region-commands.sh
+  resources:
+    requests:
+      cpu: 10m
+      memory: 100Mi
+  env:
+  - name: CUSTOM_AWS_REGION
+    default: ""
+    documentation: |-
+      Use a specific AWS region, overriding the LEASED_RESOURCE environment variable.
+      If not specified, will use the default LEASED_RESOURCE.
+  documentation: |-
+    The IPI configure step updates install-config.yaml with custom region in AWS.
+    This step should be run before ipi-conf-aws to override the default region. 
