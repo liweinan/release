@@ -49,6 +49,7 @@ tests:
     env:
       BASE_DOMAIN: qe.devcluster.openshift.com
       CUSTOM_AWS_REGION: ap-east-2
+      SINGLE_NODE_AWS_INSTANCE_TYPE: "m6i.2xlarge"
     workflow: cucushift-installer-rehearse-aws-ipi-sno
 - as: installer-rehearse-azure
   cron: '@yearly'
