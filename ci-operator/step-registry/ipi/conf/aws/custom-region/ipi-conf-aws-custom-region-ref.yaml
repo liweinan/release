@@ -18,4 +18,4 @@ ref:
       If not specified, will use the default LEASED_RESOURCE.
   documentation: |-
     The IPI configure step updates install-config.yaml with custom region in AWS.
-    This step should be run before ipi-conf-aws to override the default region. 
+    This step should be run after ipi-conf-aws to override the default region. 
