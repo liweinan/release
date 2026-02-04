@@ -4,8 +4,27 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+# Info output
+echo "Info: rhcos-conf-osstream running, OSSTREAM='${OSSTREAM:-<unset>}'"
 
-echo "Configuring the MCPs for rhel-10 osImageStream"
+# Validation that SHARED_DIR exists
+if [[ ! -d "${SHARED_DIR}" ]]; then
+  echo "Error: SHARED_DIR not set or doesn't exist"
+  exit 1
+fi
+
+# Check if OSSTREAM is set and validate it
+if [[ -z "${OSSTREAM:-}" ]]; then
+  echo "OSSTREAM is not set, skipping MachineConfigPool osImageStream configuration"
+  exit 0
+fi
+
+if [[ "${OSSTREAM}" != "rhel-9" && "${OSSTREAM}" != "rhel-10" ]]; then
+  echo "Error: OSSTREAM must be either 'rhel-9' or 'rhel-10', got: '${OSSTREAM}'"
+  exit 1
+fi
+
+echo "Configuring the MCPs for ${OSSTREAM} osImageStream"
 # these haven't changed in six years so lets assume for now they're stable
 # source https://github.com/openshift/machine-config-operator/tree/main/manifests
 cat > "${SHARED_DIR}/manifest_master.machineconfigpool.yaml" <<EOF
@@ -25,7 +44,7 @@ spec:
     matchLabels:
       node-role.kubernetes.io/master: ""
   osImageStream:
-    name: rhel-10
+    name: ${OSSTREAM}
 
 EOF
 
@@ -45,6 +64,6 @@ spec:
     matchLabels:
       node-role.kubernetes.io/worker: ""
   osImageStream:
-    name: rhel-10
+    name: ${OSSTREAM}
 
 EOF

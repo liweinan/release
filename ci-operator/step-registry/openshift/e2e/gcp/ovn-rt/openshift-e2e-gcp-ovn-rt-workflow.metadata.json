@@ -1,5 +1,5 @@
 {
-	"path": "openshift/e2e/gcp/ovn-rt/rhcos10/openshift-e2e-gcp-ovn-rt-rhcos10-workflow.yaml",
+	"path": "openshift/e2e/gcp/ovn-rt/openshift-e2e-gcp-ovn-rt-workflow.yaml",
 	"owners": {
 		"approvers": [
 			"eggfoobar",

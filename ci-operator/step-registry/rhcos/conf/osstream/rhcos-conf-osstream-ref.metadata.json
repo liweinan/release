@@ -1,5 +1,5 @@
 {
-	"path": "rhcos/conf/rhcos10/rhcos-conf-rhcos10-ref.yaml",
+	"path": "rhcos/conf/osstream/rhcos-conf-osstream-ref.yaml",
 	"owners": {
 		"approvers": [
 			"sdodson",
