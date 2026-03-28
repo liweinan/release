@@ -10,6 +10,16 @@ export AWS_SHARED_CREDENTIALS_FILE="${CLUSTER_PROFILE_DIR}/.awscred"
 REGION="${LEASED_RESOURCE}"
 METADATA_FILE="${SHARED_DIR}/metadata.json"
 
+# IAM and Route53 are global services that require a region parameter
+# Each AWS partition has one global region:
+# - Standard AWS partition: us-east-1
+# - EUSC partition: eusc-de-east-1
+if [[ "${REGION}" == eusc-* ]]; then
+    GLOBAL_REGION="eusc-de-east-1"
+else
+    GLOBAL_REGION="us-east-1"
+fi
+
 function run_command() {
     local cmd="$1"
     local var_name="$2"
@@ -149,19 +159,19 @@ function verify_arn_exists() {
 
             case "$resource_type" in
                 user)
-                    aws iam get-user --user-name "$resource_name" &>/dev/null
+                    aws iam get-user --region ${GLOBAL_REGION} --user-name "$resource_name" &>/dev/null
                     return $?
                     ;;
                 role)
-                    aws iam get-role --role-name "$resource_name" &>/dev/null
+                    aws iam get-role --region ${GLOBAL_REGION} --role-name "$resource_name" &>/dev/null
                     return $?
                     ;;
                 policy)
-                    aws iam get-policy --policy-arn "$arn" &>/dev/null
+                    aws iam get-policy --region ${GLOBAL_REGION} --policy-arn "$arn" &>/dev/null
                     return $?
                     ;;
                 instance-profile)
-                    aws iam get-instance-profile --instance-profile-name "$resource_name" &>/dev/null
+                    aws iam get-instance-profile --region ${GLOBAL_REGION} --instance-profile-name "$resource_name" &>/dev/null
                     return $?
                     ;;
                 *)
@@ -192,10 +202,10 @@ function verify_arn_exists() {
             fi
             ;;
         route53)
-            # Route53 is global
+            # Route53 is global in standard AWS, but requires --region in EUSC partition
             local hosted_zone_id
             hosted_zone_id=$(echo "$resource_part" | cut -d/ -f2)
-            aws route53 get-hosted-zone --id "$hosted_zone_id" &>/dev/null
+            aws route53 get-hosted-zone --region ${GLOBAL_REGION} --id "$hosted_zone_id" &>/dev/null
             return $?
             ;;
         elasticfilesystem)
@@ -275,7 +285,7 @@ fi
 
 # To avoid iterating through all IAM users, we will rely on the convention that all IAM users begin with the cluster name.
 # Don't bother with other IAM resources (e.g. access keys, policies), as they depend on the user to exist. If the user is gone, so are they.
-run_command "aws iam list-users --query 'Users[?starts_with(UserName, \`$CLUSTER_NAME\`)].Arn'" "IAM_USERS"
+run_command "aws iam list-users --region ${GLOBAL_REGION} --query 'Users[?starts_with(UserName, \`$CLUSTER_NAME\`)].Arn'" "IAM_USERS"
 
 # Combine tagged resources and IAM users into a single array of ARNs
 LEAKED_ARNS=$(printf '%s\n' "$TAGGED_RESOURCES" "$IAM_USERS" | jq -s '((.[0].ResourceTagMappingList // []) | map(.ResourceARN)) + (.[1] // [])')
@@ -306,10 +316,10 @@ fi
 
 # DNS records are not tagged, but for this test we can depend on the fact that test clusters always use a unique name (so there will not be false-positive matches)
 # Find the public hosted zone using the base domain
-run_command "aws route53 list-hosted-zones-by-name --dns-name \"$AWS_BASE_DOMAIN\" --query \"HostedZones[?Name=='${AWS_BASE_DOMAIN}.' && Config.PrivateZone==\\\`false\\\`].Id\" --output text | cut -d'/' -f3" "HOSTED_ZONE_ID"
+run_command "aws route53 list-hosted-zones-by-name --region ${GLOBAL_REGION} --dns-name \"$AWS_BASE_DOMAIN\" --query \"HostedZones[?Name=='${AWS_BASE_DOMAIN}.' && Config.PrivateZone==\\\`false\\\`].Id\" --output text | cut -d'/' -f3" "HOSTED_ZONE_ID"
 
 if [[ -n "$HOSTED_ZONE_ID" ]]; then
-  run_command "aws route53 list-resource-record-sets --hosted-zone-id $HOSTED_ZONE_ID --query \"ResourceRecordSets[?contains(Name, \\\`${CLUSTER_NAME}.${AWS_BASE_DOMAIN}\\\`)]\"" "DNS_RECORDS"
+  run_command "aws route53 list-resource-record-sets --region ${GLOBAL_REGION} --hosted-zone-id $HOSTED_ZONE_ID --query \"ResourceRecordSets[?contains(Name, \\\`${CLUSTER_NAME}.${AWS_BASE_DOMAIN}\\\`)]\"" "DNS_RECORDS"
 fi
 
 # Check if any resources were returned
